@@ -1,11 +1,14 @@
-const blacklistedTokens = require("../blacklist");
 const jwt = require("jsonwebtoken");
+const blacklistedTokensModel = require("../schemas/blacklistedTokens.schema");
 
-const auth = (req, res, next) => {
+const auth = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (authHeader) {
     const token = req.headers.authorization.split(" ")[1];
-    if (blacklistedTokens.includes(token)) {
+
+    const blacklistedTokens = await blacklistedTokensModel.find({ token });
+
+    if (blacklistedTokens && blacklistedTokens.length != 0) {
       return res
         .status(501)
         .json({ msg: "you are logged out , please login again" });

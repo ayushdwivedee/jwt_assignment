@@ -3,7 +3,8 @@ const userRouter = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const userModel = require("../schemas/userModel.schema");
-const blacklistedTokens = require("../blacklist");
+
+const blacklistedTokensModel = require("../schemas/blacklistedTokens.schema");
 
 userRouter.post("/register", async (req, res) => {
   const { name, email, password, gender, age } = req.body;
@@ -55,11 +56,15 @@ userRouter.post("/login", async (req, res) => {
   }
 });
 
-userRouter.post("/logout", (req, res) => {
+userRouter.post("/logout", async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
 
-  blacklistedTokens.push(token);
-
-  res.status(201).json({ msg: "logout successfully" });
+  try {
+    const blacklistedTokens = new blacklistedTokensModel({ token });
+    await blacklistedTokens.save();
+    res.status(201).json({ msg: "logout successfully" });
+  } catch (error) {
+    res.status(501).json({ msg: "logout error" });
+  }
 });
 module.exports = userRouter;
